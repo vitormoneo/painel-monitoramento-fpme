@@ -79,8 +79,9 @@
       position: absolute; left: 9px; top: 50%;
       transform: translateY(-50%); color: #bbb; font-size: 13px;
     }
+    .controls-right { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
     .edit-btn {
-      margin-left: auto; padding: 7px 16px; border-radius: 7px;
+      padding: 7px 16px; border-radius: 7px;
       border: 2px solid #d5dbdb; background: #fff; color: #7f8c8d;
       font-size: 11.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;
     }
@@ -88,6 +89,13 @@
       border-color: var(--teal);
       background: rgba(58,139,139,0.09); color: var(--teal);
     }
+    .io-btn {
+      padding: 7px 14px; border-radius: 7px;
+      border: 2px solid #d5dbdb; background: #fff; color: #7f8c8d;
+      font-size: 11.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .io-btn:hover { border-color: var(--teal); color: var(--teal); }
     .legend { padding: 8px 28px; display: flex; gap: 14px; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: #7f8c8d; }
     .legend-box { width: 9px; height: 9px; border-radius: 2px; }
@@ -268,7 +276,7 @@
     @media (max-width: 1120px) {
       .law-header { align-items: flex-start; }
       .law-stats { width: 100%; }
-      .edit-btn { margin-left: 0; }
+      .controls-right { margin-left: 0; }
     }
     @media (max-width: 980px) {
       .table-head { display: none; }
@@ -888,7 +896,11 @@
             <input id="search" type="text" placeholder="Buscar ação, responsável, base legal..." value="${esc(search)}">
             <span class="search-icon">⌕</span>
           </div>
-          <button id="editBtn" class="edit-btn ${editing ? "active" : ""}">${editing ? "✓ Salvar" : "✎ Editar Status"}</button>
+          <div class="controls-right">
+            <button id="exportBtn" class="io-btn" title="Baixar estado atual como JSON">⬇ Exportar</button>
+            <label class="io-btn" title="Carregar JSON exportado anteriormente">⬆ Importar<input id="importFile" type="file" accept=".json" style="display:none"></label>
+            <button id="editBtn" class="edit-btn ${editing ? "active" : ""}">${editing ? "✓ Salvar" : "✎ Editar Status"}</button>
+          </div>
         </div>
 
         <div class="container legend">
@@ -945,6 +957,17 @@
         });
       }
 
+      const exportBtn = document.getElementById("exportBtn");
+      if (exportBtn) exportBtn.addEventListener("click", exportData);
+
+      const importFile = document.getElementById("importFile");
+      if (importFile) {
+        importFile.addEventListener("change", e => {
+          if (e.target.files[0]) importData(e.target.files[0]);
+          e.target.value = "";
+        });
+      }
+
       // Implementation status selects
       document.querySelectorAll(".status-select:not(.fpme-status-select)").forEach(sel => {
         sel.addEventListener("change", e => {
@@ -990,6 +1013,55 @@
         inp.addEventListener("focus", e => { e.target.style.borderColor = TEAL; });
         inp.addEventListener("blur",  e => { e.target.style.borderColor = "#e0e0e0"; });
       });
+    }
+
+    function exportData() {
+      const out = { v: 1, ts: new Date().toISOString(), items: {}, fpme: {} };
+      for (const lk of Object.keys(data)) {
+        for (const ph of data[lk].phases) {
+          for (const it of ph.items) {
+            out.items[it.id] = { status: it.status, obs: it.obs };
+          }
+        }
+        for (const fa of (data[lk].fpmeActions || [])) {
+          out.fpme[fa.id] = { status: fa.status, obs: fa.obs };
+        }
+      }
+      const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `painel-fpme-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const out = JSON.parse(e.target.result);
+          for (const lk of Object.keys(data)) {
+            for (const ph of data[lk].phases) {
+              for (const it of ph.items) {
+                if (out.items?.[it.id]) {
+                  it.status = out.items[it.id].status ?? it.status;
+                  it.obs    = out.items[it.id].obs    ?? it.obs;
+                }
+              }
+            }
+            for (const fa of (data[lk].fpmeActions || [])) {
+              if (out.fpme?.[fa.id]) {
+                fa.status = out.fpme[fa.id].status ?? fa.status;
+                fa.obs    = out.fpme[fa.id].obs    ?? fa.obs;
+              }
+            }
+          }
+          render();
+        } catch {
+          alert("Arquivo inválido. Use um JSON exportado por este painel.");
+        }
+      };
+      reader.readAsText(file);
     }
 
     render();
