@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel de Monitoramento – Implementação da Legislação Educacional</title>
+  <style>
+    :root {
+      --navy: #1F3461;
+      --teal: #3A8B8B;
+      --green: #5AAD4E;
+      --light-green: #8CC63F;
+      --light-gray: #F6F7F9;
+      --stat-total: #85c1e9;
+      --stat-done: #8CC63F;
+      --stat-progress: #f9e79f;
+      --stat-late: #f1948a;
+      --stat-pending: #d5dbdb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--light-gray);
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #243444;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .topbar {
+      background: linear-gradient(135deg, var(--navy) 0%, #2A4A6B 100%);
+      padding: 18px 28px 14px;
+      color: #fff;
+    }
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
+    .brand img {
+      height: 54px; border-radius: 6px; background: #fff;
+      padding: 4px 8px; object-fit: contain;
+    }
+    .kicker {
+      font-size: 9.5px; font-weight: 700; letter-spacing: 2.2px;
+      text-transform: uppercase; color: var(--light-green); margin-bottom: 2px;
+    }
+    .title { font-size: 19px; font-weight: 800; letter-spacing: -0.3px; }
+    .subtitle { font-size: 11px; color: #aab7c4; margin-top: 2px; }
+    .stats { display: flex; gap: 14px; flex-wrap: wrap; }
+    .stat { text-align: center; min-width: 56px; }
+    .stat .n { font-size: 20px; font-weight: 800; }
+    .stat .l { font-size: 8.5px; color: #aab7c4; letter-spacing: 0.4px; text-transform: uppercase; }
+    .controls {
+      padding: 14px 28px 0;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .tabs {
+      display: flex; background: #dfe4ea; border-radius: 7px; padding: 3px; gap: 2px;
+    }
+    .tab {
+      padding: 6px 16px; border-radius: 5px; border: none;
+      font-size: 11.5px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s; background: transparent; color: #7f8c8d;
+    }
+    .tab.active {
+      background: #fff; color: var(--navy);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .search-wrap { position: relative; flex: 1; max-width: 300px; }
+    .search-wrap input {
+      width: 100%; padding: 7px 11px 7px 30px;
+      border-radius: 7px; border: 1.5px solid #d5dbdb;
+      font-size: 11.5px; outline: none; background: #fff;
+    }
+    .search-icon {
+      position: absolute; left: 9px; top: 50%;
+      transform: translateY(-50%); color: #bbb; font-size: 13px;
+    }
+    .edit-btn {
+      margin-left: auto; padding: 7px 16px; border-radius: 7px;
+      border: 2px solid #d5dbdb; background: #fff; color: #7f8c8d;
+      font-size: 11.5px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    }
+    .edit-btn.active {
+      border-color: var(--teal);
+      background: rgba(58,139,139,0.09); color: var(--teal);
+    }
+    .legend { padding: 8px 28px; display: flex; gap: 14px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: #7f8c8d; }
+    .legend-box { width: 9px; height: 9px; border-radius: 2px; }
+    .content { padding: 4px 28px 36px; }
+    .law-card {
+      background: #fff; border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.03);
+      overflow: hidden; border: 1px solid #e4e7eb;
+    }
+    .law-header {
+      display: flex; align-items: center; gap: 16px; padding: 16px 20px;
+      background: linear-gradient(135deg, var(--navy), var(--teal));
+      color: #fff; flex-wrap: wrap;
+    }
+    .ring { position: relative; width: 52px; height: 52px; flex: 0 0 auto; }
+    .ring svg { width: 52px; height: 52px; transform: rotate(-90deg); }
+    .ring-text {
+      position: absolute; inset: 0; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: #fff;
+    }
+    .law-meta { flex: 1; min-width: 240px; }
+    .law-tag {
+      font-size: 10.5px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; opacity: 0.75; margin-bottom: 1px;
+    }
+    .law-title { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+    .law-date { font-size: 10.5px; opacity: 0.7; margin-top: 1px; }
+    .law-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+    .law-stat {
+      background: rgba(255,255,255,0.13); border-radius: 7px;
+      padding: 5px 9px; min-width: 52px; text-align: center;
+    }
+    .law-stat .n { font-size: 18px; font-weight: 800; }
+    .law-stat .l { font-size: 8.5px; opacity: 0.85; letter-spacing: 0.3px; color: #dfe7ef; }
+
+    /* ── Card-level tabs ── */
+    .card-tabs {
+      display: flex; gap: 0;
+      border-bottom: 2px solid #e4e7eb;
+      background: #fff; padding: 0 20px;
+    }
+    .card-tab {
+      padding: 10px 20px; font-size: 11.5px; font-weight: 700;
+      border: none; background: transparent; color: #7f8c8d;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -2px; transition: all 0.15s;
+    }
+    .card-tab.active { color: var(--navy); border-bottom-color: var(--teal); }
+    .card-tab:hover:not(.active) { color: var(--navy); background: rgba(0,0,0,0.03); }
+
+    /* ── FPME chip on implementation rows ── */
+    .fpme-chip {
+      display: inline-flex; align-items: center;
+      font-size: 9px; font-weight: 800;
+      color: var(--teal);
+      background: rgba(58,139,139,0.1);
+      border: 1.2px solid rgba(58,139,139,0.35);
+      border-radius: 10px; padding: 2px 8px;
+      cursor: pointer; white-space: nowrap;
+      transition: background 0.12s; letter-spacing: 0.3px;
+    }
+    .fpme-chip:hover { background: rgba(58,139,139,0.22); }
+
+    /* ── FPME type badge ── */
+    .fpme-type-badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: 10px;
+      font-size: 10px; font-weight: 800; white-space: nowrap;
+    }
+
+    /* ── FPME item reference chip ── */
+    .fpme-item-ref {
+      display: inline-flex; padding: 2px 7px; border-radius: 4px;
+      font-size: 9.5px; font-weight: 700;
+      color: var(--navy); background: rgba(31,52,97,0.08);
+      border: 1px solid rgba(31,52,97,0.15);
+      font-family: Consolas, monospace; margin: 1px; cursor: default;
+    }
+
+    /* ── FPME table ── */
+    .fpme-table-wrap { padding: 10px 0; }
+    .fpme-empty { padding: 48px 24px; text-align: center; color: #aab7c4; font-size: 12.5px; }
+    .w-fpme-tipo  { flex: 0 0 110px; }
+    .w-fpme-desc  { flex: 1; color: #2c3e50; }
+    .w-fpme-data  { flex: 0 0 110px; font-weight: 650; color: #444; }
+    .w-fpme-links { flex: 0 0 160px; }
+    .w-fpme-status { flex: 0 0 120px; text-align: center; }
+    .w-fpme-obs   { flex: 0 0 175px; }
+
+    .phase-block { margin-bottom: 2px; animation: fadeIn 0.35s ease both; }
+    .phase-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 12px; border-radius: 0 5px 5px 0;
+    }
+    .phase-name {
+      font-weight: 800; font-size: 10.5px;
+      text-transform: uppercase; letter-spacing: 1.2px; min-width: 95px;
+    }
+    .phase-summary { font-size: 10.5px; color: #7f8c8d; }
+    .mini-dots {
+      margin-left: auto; display: flex; gap: 2px;
+      flex-wrap: wrap; justify-content: flex-end;
+    }
+    .mini-dot { width: 9px; height: 9px; border-radius: 2px; opacity: 0.7; }
+    .table-head, .row { display: flex; align-items: center; padding: 5px 12px; }
+    .table-head {
+      background: rgba(31,52,97,0.03);
+      border-bottom: 1px solid rgba(31,52,97,0.08);
+    }
+    .row {
+      padding-top: 6px; padding-bottom: 6px;
+      border-bottom: 1px solid #f0f0f0; min-height: 38px;
+    }
+    .row:nth-child(even) { background: #fafbfc; }
+    .cell { padding: 0 6px; font-size: 11.5px; line-height: 1.35; }
+    .head-cell {
+      font-size: 9px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--navy); opacity: 0.45; padding: 0 6px;
+    }
+    .w-deadline { flex: 0 0 150px; font-weight: 650; color: #444; }
+    .w-action   { flex: 1; color: #2c3e50; }
+    .w-resp     { flex: 0 0 140px; font-size: 10.5px; color: #7f8c8d; text-align: center; }
+    .w-legal    { flex: 0 0 115px; text-align: center; }
+    .w-status   { flex: 0 0 120px; text-align: center; }
+    .w-obs      { flex: 0 0 175px; }
+    .legal-pill { font-size: 10px; font-weight: 700; color: var(--teal); font-family: Consolas, monospace; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 14px;
+      font-size: 10.5px; font-weight: 700; white-space: nowrap;
+      border: 1.5px solid transparent;
+    }
+    .status-select, .obs-input { font-size: 10.5px; font-family: inherit; outline: none; }
+    .status-select { padding: 4px 6px; border-radius: 6px; cursor: pointer; font-weight: 700; }
+    .obs-input {
+      width: 100%; padding: 4px 7px; border-radius: 5px;
+      border: 1.5px solid #e0e0e0; background: #fff; color: #444;
+    }
+    .obs-input.has-value { background: #fffde7; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .counter-section {
+      padding: 16px 20px; background: #f0f6ff;
+      border-bottom: 1px solid #dde8f5;
+    }
+    .counter-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
+    }
+    .counter-title {
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1.3px; color: var(--navy);
+    }
+    .counter-links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .counter-link {
+      font-size: 10.5px; font-weight: 700; color: var(--teal);
+      text-decoration: none; padding: 3px 9px; border-radius: 5px;
+      border: 1.5px solid var(--teal); white-space: nowrap;
+    }
+    .counter-link:hover { background: rgba(58,139,139,0.08); }
+    .counter-cards { display: flex; gap: 14px; flex-wrap: wrap; }
+    .counter-card {
+      flex: 1; min-width: 260px; background: #fff; border-radius: 9px;
+      border: 1px solid #d6e4f5; padding: 14px 16px;
+      box-shadow: 0 1px 4px rgba(31,52,97,0.05);
+    }
+    .counter-card-label { font-size: 11px; color: #556; margin-bottom: 12px; line-height: 1.4; }
+    .counter-bars { display: flex; flex-direction: column; gap: 7px; }
+    .counter-bar-row { display: flex; align-items: center; gap: 8px; }
+    .counter-bar-label { font-size: 10px; font-weight: 700; width: 160px; flex: 0 0 160px; color: #444; }
+    .counter-bar-track { flex: 1; height: 14px; background: #e8edf3; border-radius: 7px; overflow: hidden; }
+    .counter-bar-fill { height: 100%; border-radius: 7px; transition: width 0.6s ease; }
+    .counter-bar-pct { font-size: 11px; font-weight: 800; width: 42px; text-align: right; flex: 0 0 42px; }
+    .counter-bar-abs { font-size: 10px; font-weight: 600; width: 68px; text-align: right; flex: 0 0 68px; opacity: 0.8; }
+    @media (max-width: 1120px) {
+      .law-header { align-items: flex-start; }
+      .law-stats { width: 100%; }
+      .edit-btn { margin-left: 0; }
+    }
+    @media (max-width: 980px) {
+      .table-head { display: none; }
+      .row {
+        display: grid; grid-template-columns: 1fr;
+        gap: 6px; padding: 10px 12px;
+      }
+      .cell, .w-deadline, .w-action, .w-resp, .w-legal, .w-status, .w-obs,
+      .w-fpme-tipo, .w-fpme-desc, .w-fpme-data, .w-fpme-links, .w-fpme-status, .w-fpme-obs {
+        flex: none; width: 100%; text-align: left;
+      }
+      .cell::before {
+        display: block; font-size: 9px; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.8px;
+        color: rgba(31,52,97,0.45); margin-bottom: 2px;
+      }
+      .w-deadline::before  { content: "Prazo previsto"; }
+      .w-action::before    { content: "Medida"; }
+      .w-resp::before      { content: "Responsável"; }
+      .w-legal::before     { content: "Base legal"; }
+      .w-status::before    { content: "Status"; }
+      .w-obs::before       { content: "Observação"; }
+      .w-fpme-tipo::before  { content: "Tipo"; }
+      .w-fpme-desc::before  { content: "Descrição"; }
+      .w-fpme-data::before  { content: "Data"; }
+      .w-fpme-links::before { content: "Itens monitorados"; }
+      .w-fpme-status::before { content: "Status"; }
+      .w-fpme-obs::before   { content: "Observação"; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const LOGO_SRC = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAV4AAABcCAYAAAAmlN2lAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAGH1JREFUeNrsnV1sXMd1x4dfoiRb8jpurMiKpFVhtEDa2kujMRo3jXZToEhRFCSRPrQuEi6L9iFoC2pfXOQhILdvDdCSbOCXIgBXeeibw1WLAulXuMqX4cQoV3WB1KhbrlVJjRTDXn0lIimRvbM8szwc3nvn487de+/y/IGFKPLunTnz8Zsz582dYYxEIpFIJBKJROpnDYgfTr28OD9yda3AHj3KRMaHjg6wF17+OfaDr76dndIeGmKt7yyUqNmRSAdbw+KH7eHhwuapM8WRa1cZ20o3fAcPD7CTv3uIfejcMfaLnz3H/uO1tdQX9PboYfbw5ClqcSQSiQ3uhcMo2/zoGe+3Q6mG7jMvH2KjT+9k/dQLT3Xgm3bo8nLdHhmhFkcikfaCN+3wlaErlGb4CuiywUFqbSQSyR+8aYVvEHTTDF+CLolE0gZv2uCrgm4a4UvQJZFIxuBNC3x1oZsm+BJ0SSSSNXiThq8pdNMAX4IuiUSKDN6k4GsL3SThS9AlkUjOwNtr+EaFbhLwJeiSSKTYwBs3fF1DtxfwJeiSSKTYwRsXfOOCbpzwJeiSSKTYwRsXfOOCbpzwJeiSSKTYwRsXfOOCbpzwJeiSSKTYwRsXfOOCbpzwJeiq6XoQksJZVdOAAAAldEFJRgAA";
+    const NAVY = "#1F3461";
+    const TEAL = "#3A8B8B";
+    const GREEN = "#5AAD4E";
+    const LIGHT_GREEN = "#8CC63F";
+
+    const STATUS_CONFIG = {
+      concluido:    { label: "Concluído",    icon: "✓", bg: "#d5f5e3", color: "#1e8449", border: "#82e0aa" },
+      em_andamento: { label: "Em andamento", icon: "◐", bg: "#fef9e7", color: "#b7950b", border: "#f9e79f" },
+      atrasado:     { label: "Atrasado",     icon: "!", bg: "#fdedec", color: "#c0392b", border: "#f1948a" },
+      nao_iniciado: { label: "Não iniciado", icon: "○", bg: "#f4f6f7", color: "#7f8c8d", border: "#d5dbdb" },
+    };
+
+    const PHASE_COLORS = {
+      "Imediata":                          "#c0392b",
+      "Curto Prazo":                       "#e67e22",
+      "Médio Prazo":                       TEAL,
+      "Contínua":                          GREEN,
+      "Curto Prazo – Governança":          "#CA6F1E",
+      "Curto Prazo – Metas":               "#e67e22",
+      "Médio e Longo Prazo – Governança":  "#2471A3",
+      "Médio e Longo Prazo – Metas":       TEAL,
+    };
+
+    const LAW_NUMBER_COLORS = {
+      "Concluídas":    "#8CC63F",
+      "Em andamento":  "#f9e79f",
+      "Atrasadas":     "#f1948a",
+      "Pendentes":     "#d5dbdb",
+    };
+
+    const FPME_TIPOS = {
+      RIC:         { label: "RIC",          color: "#2980b9", bg: "#d6eaf8" },
+      Reuniao:     { label: "Reunião",      color: "#3A8B8B", bg: "#d5f0ee" },
+      Oficio:      { label: "Ofício",       color: "#e67e22", bg: "#fde8d0" },
+      NotaTecnica: { label: "Nota Técnica", color: "#8e44ad", bg: "#ead9f5" },
+      Indicacao:   { label: "Indicação",    color: "#27ae60", bg: "#d5f5e3" },
+      PL:          { label: "PL",           color: "#c0392b", bg: "#fde0de" },
+      Outros:      { label: "Outros",       color: "#7f8c8d", bg: "#f4f6f7" },
+    };
+
+    const LAWS = {
+  sne: {
+    id:"sne", tag:"LC 220/2025", title:"Sistema Nacional de Educação", date:"31 de outubro de 2025",
+    fpmeActions: [
+      { id:"sne-fpme-1", tipo:"Reuniao",
+        descricao:"Diagnóstico de implementação do SNE com Fundação Itaú: transparência do MEC, regulamentação das CIBEs, participação da sociedade civil na CITE e estruturação da INDE",
+        data:"02/04/2026", linkedItems:["sne-2","sne-3","sne-6","sne-17"],
+        status:"concluido", obs:"Apenas RS e SE ainda não regulamentaram CIBEs. Fundação tem interesse em colaborar tecnicamente com o MEC nas comissões temáticas e na padronização de dados." },
+      { id:"sne-fpme-2", tipo:"Reuniao",
+        descricao:"Diagnóstico sobre INDE e divulgação do SNE com Dep. Rafael Brito: plataforma INDE pronta mas sem data de operacionalização; funcionamento da CITE pouco divulgado pelo MEC",
+        data:"08/04/2026", linkedItems:["sne-6","sne-2"],
+        status:"concluido", obs:"Encaminhamento: elaboração de Indicação sugerindo complementação do portal do MEC com informações do SNE." },
+      { id:"sne-fpme-3", tipo:"Indicacao",
+        descricao:"Indicação ao Governo Federal sugerindo criação ou aperfeiçoamento de página eletrônica com informações e documentos do SNE — Dep. Rafael Brito",
+        data:"15/04/2026", linkedItems:["sne-6","sne-2"],
+        status:"concluido", obs:"" },
+      { id:"sne-fpme-4", tipo:"RIC",
+        descricao:"RIC ao MEC sobre implementação do SNE (geral) e INDE (específico) — em elaboração",
+        data:"2026", linkedItems:["sne-2","sne-6","sne-17"],
+        status:"nao_iniciado", obs:"Sugestão da Fundação Itaú: dois RICs — um sobre SNE geral e outro focado na INDE." },
+    ],
+    phases: [
+      { name:"Imediata", items:[
+        { id:"sne-1", action:"Entrada em vigor da Lei Complementar nº 220/2025", deadline:"03/11/2025", responsible:"União", legal:"Art. 64", status:"concluido", obs:"" },
+        { id:"sne-2", action:"Criação e instalação da CITE e das CIBEs pelos respectivos Poderes Executivos", deadline:"Até 01/02/2026 (90 dias)", responsible:"União / Estados", legal:"Art. 63", status:"em_andamento", obs:"" },
+      ]},
+      { name:"Curto Prazo", items:[
+        { id:"sne-3", action:"Elaboração e aprovação dos regimentos internos da CITE e das CIBEs", deadline:"2026", responsible:"CITE / CIBEs", legal:"Art. 12, § 1º", status:"nao_iniciado", obs:"" },
+        { id:"sne-4", action:"Nomeação dos integrantes da CITE e das CIBEs", deadline:"2026", responsible:"MEC / Secret. Estaduais", legal:"Art. 13, § 8º / Art. 14, § 4º", status:"nao_iniciado", obs:"" },
+        { id:"sne-5", action:"Instituição do Fórum dos Conselhos de Educação no CNE", deadline:"2026", responsible:"MEC / CNE", legal:"Art. 15, § 5º", status:"nao_iniciado", obs:"" },
+        { id:"sne-6", action:"Estruturação inicial da INDE: normas, padrões de interoperabilidade e CPF como INUE", deadline:"2026", responsible:"MEC", legal:"Arts. 24 a 26", status:"nao_iniciado", obs:"" },
+        { id:"sne-7", action:"Instituição do FNE e incentivo aos fóruns subnacionais", deadline:"2026", responsible:"União / Entes subnacionais", legal:"Art. 19, par. ún.", status:"nao_iniciado", obs:"" },
+      ]},
+      { name:"Médio Prazo", items:[
+        { id:"sne-8", action:"Adequação das normas legais e administrativas de todos os entes federados à LC 220/2025", deadline:"Até nov/2027 (2 anos)", responsible:"Todos os entes", legal:"Art. 62", status:"nao_iniciado", obs:"" },
+        { id:"sne-9", action:"Pactuação dos padrões mínimos de qualidade da educação básica (condições de oferta e rendimento)", deadline:"2026–2027", responsible:"CITE", legal:"Arts. 32 a 35", status:"nao_iniciado", obs:"" },
+        { id:"sne-10", action:"Aprovação da metodologia de cálculo do CAQ, com base em estudos do INEP", deadline:"2026–2027", responsible:"CITE / INEP", legal:"Art. 13, VI / Art. 41", status:"nao_iniciado", obs:"" },
+        { id:"sne-11", action:"Pactuação da oferta de educação escolar pública obrigatória entre Estados e Municípios", deadline:"2026–2027", responsible:"CIBEs", legal:"Art. 6º, II / Art. 14", status:"nao_iniciado", obs:"" },
+        { id:"sne-12", action:"Ato do Executivo federal sobre educação escolar indígena e quilombola, com consulta prévia (Conv. 169 da OIT)", deadline:"2026–2027", responsible:"União", legal:"Arts. 57 a 61", status:"nao_iniciado", obs:"" },
+        { id:"sne-13", action:"Instituição do fórum permanente de acompanhamento do piso salarial do magistério público", deadline:"2026–2027", responsible:"União", legal:"Art. 20", status:"nao_iniciado", obs:"" },
+      ]},
+      { name:"Contínua", items:[
+        { id:"sne-14", action:"Conferências Nacionais de Educação, articuladas pelo FNE", deadline:"A cada 4 anos", responsible:"FNE / Entes federados", legal:"Art. 22", status:"nao_iniciado", obs:"" },
+        { id:"sne-15", action:"Produção de indicadores da Avaliação Nacional da Educação Básica", deadline:"A cada 2 anos (máx.)", responsible:"União (INEP)", legal:"Art. 50, § 1º", status:"nao_iniciado", obs:"" },
+        { id:"sne-16", action:"Monitoramento e avaliação dos Planos Decenais de Educação", deadline:"Permanente", responsible:"Todos os entes", legal:"Arts. 27 a 30", status:"nao_iniciado", obs:"" },
+        { id:"sne-17", action:"Cooperação no fornecimento de dados educacionais à INDE via plataforma nacional", deadline:"Permanente", responsible:"Estados / DF / Municípios", legal:"Art. 6º, XI / Art. 7º, VIII", status:"nao_iniciado", obs:"" },
+        { id:"sne-18", action:"Assistência técnica e financeira da União aos entes subnacionais, com base no CAQ", deadline:"Permanente", responsible:"União", legal:"Art. 5º, III / Art. 30", status:"nao_iniciado", obs:"" },
+        { id:"sne-19", action:"Avaliação da educação superior e da educação profissional e tecnológica", deadline:"Permanente", responsible:"União (INEP / CAPES)", legal:"Arts. 51 a 56", status:"nao_iniciado", obs:"" },
+        { id:"sne-20", action:"Programas de incentivo à permanência na educação básica e assistência estudantil na educação superior", deadline:"Permanente", responsible:"União / Estados / DF", legal:"Arts. 42 a 45", status:"nao_iniciado", obs:"" },
+      ]},
+    ],
+  },
+  ept: {
+    id:"ept", tag:"Lei 14.645/2023", title:"Marco Legal da EPT", date:"2 de agosto de 2023",
+    fpmeActions: [
+      { id:"ept-fpme-1", tipo:"Reuniao",
+        descricao:"Diagnóstico de implementação do Marco Legal da EPT com Fundação Itaú (IET): Comissão Tripartite, Sistema Nacional de Avaliação e DCNs para Formação de Professores",
+        data:"02/04/2026", linkedItems:["ept-11","ept-19","ept-21"],
+        status:"concluido", obs:"Prioridades: oficialização Comissão Tripartite, Portaria do Sistema de Avaliação, atualização das DCNs. Decreto 12.433/2025 foi a única ação concluída. PROPAG não é foco por ora." },
+      { id:"ept-fpme-2", tipo:"Oficio",
+        descricao:"Ofício 005/2026/FPME ao Ministro da Educação sobre ações prioritárias para consolidação do Marco Legal da EPT",
+        data:"15/04/2026", linkedItems:["ept-19","ept-21"],
+        status:"concluido", obs:"Assinado pela Dep. Tabata Amaral. Solicita: oficialização da Comissão Tripartite Permanente, regulamentação do Sistema Nacional de Avaliação e atualização das DCNs para formação de professores." },
+      { id:"ept-fpme-3", tipo:"RIC",
+        descricao:"RIC ao MEC sobre resultados do GT Interinstitucional e estágio de implementação da Política Nacional de EPT (Lei 14.645/2023 e Decreto 12.603/2025)",
+        data:"2026", linkedItems:["ept-11","ept-19","ept-21"],
+        status:"em_andamento", obs:"Questiona GTI, plano de implementação, SISTEC, SINAEPT e data de instituição da Comissão Tripartite Permanente." },
+    ],
+    phases: [
+      { name:"Imediata", items:[
+        { id:"ept-1", action:"Entrada em vigor da Lei nº 14.645/2023", deadline:"03/08/2023", responsible:"União", legal:"Art. 5º", status:"concluido", obs:"" },
+        { id:"ept-2", action:"Dever da União de assegurar processo nacional de avaliação das instituições e cursos de EPT", deadline:"03/08/2023", responsible:"União / Sist. de Ensino", legal:"Art. 9º, VII-A da LDB", status:"concluido", obs:"" },
+        { id:"ept-3", action:"Autorização legal para articulação da EPT de nível médio com a aprendizagem profissional", deadline:"03/08/2023", responsible:"Instituições / Empregadores", legal:"Art. 36-B, §§ 2º e 3º", status:"concluido", obs:"" },
+        { id:"ept-4", action:"Obrigação das IES de transparência no aproveitamento de estudos da EPT em cursos superiores afins", deadline:"03/08/2023", responsible:"IES", legal:"Art. 39, § 4º da LDB", status:"concluido", obs:"" },
+        { id:"ept-5", action:"Organização da EPT em eixos tecnológicos com itinerários formativos contínuos", deadline:"03/08/2023", responsible:"MEC / Inst. de EPT", legal:"Art. 42-A da LDB", status:"concluido", obs:"" },
+        { id:"ept-6", action:"Orientação da oferta de EPT pela avaliação de qualidade", deadline:"03/08/2023", responsible:"MEC / Inst. de EPT", legal:"Art. 42-B da LDB", status:"concluido", obs:"" },
+      ]},
+      { name:"Curto Prazo", items:[
+        { id:"ept-7", action:"Regulamentação do aproveitamento de atividades pedagógicas de EPT para contrato de aprendizagem", deadline:"2023–2024", responsible:"MEC / MTE", legal:"Art. 36-B, § 3º, I", status:"em_andamento", obs:"" },
+        { id:"ept-8", action:"Regulamentação do aproveitamento de horas de aprendizagem para carga horária do ensino médio", deadline:"2023–2024", responsible:"MEC / MTE", legal:"Art. 36-B, § 3º, II", status:"em_andamento", obs:"" },
+        { id:"ept-9", action:"Regulamentação dos critérios de aproveitamento de EPT de nível médio em cursos superiores afins", deadline:"2023–2024", responsible:"MEC / CNE", legal:"Art. 39, § 4º da LDB", status:"em_andamento", obs:"" },
+        { id:"ept-10", action:"Atualização do CNCT e do CNCST para equivalências entre níveis médio e superior", deadline:"2023–2024", responsible:"MEC", legal:"Art. 42-A, §§ 3º e 4º", status:"em_andamento", obs:"" },
+      ]},
+      { name:"Médio Prazo", items:[
+        { id:"ept-11", action:"Formulação e implementação da Política Nacional de EPT, articulada ao PNE", deadline:"Até ago/2025 (2 anos)", responsible:"União / Estados / DF", legal:"Art. 4º, caput", status:"em_andamento", obs:"" },
+        { id:"ept-12", action:"Fomento à expansão da oferta de EPT, por necessidades regionais", deadline:"Até ago/2025", responsible:"União / Estados / DF", legal:"Art. 4º, I", status:"nao_iniciado", obs:"" },
+        { id:"ept-13", action:"Estímulo a estudos e projetos inovadores articulando EPT ao mundo do trabalho", deadline:"Até ago/2025", responsible:"União / Estados / DF", legal:"Art. 4º, II", status:"nao_iniciado", obs:"" },
+        { id:"ept-14", action:"Participação ativa do setor produtivo na formação e empregabilidade dos egressos", deadline:"Até ago/2025", responsible:"União / Setor Produtivo", legal:"Art. 4º, III", status:"nao_iniciado", obs:"" },
+        { id:"ept-15", action:"Articulação entre instituições formadoras, setor produtivo e órgãos públicos", deadline:"Até ago/2025", responsible:"MEC / Inst. / Setor Prod.", legal:"Art. 4º, IV", status:"nao_iniciado", obs:"" },
+        { id:"ept-16", action:"Integração curricular entre cursos e programas para itinerários formativos", deadline:"Até ago/2025", responsible:"MEC / Inst. de EPT", legal:"Art. 4º, V", status:"nao_iniciado", obs:"" },
+        { id:"ept-17", action:"Fomento à capacitação digital na EPT", deadline:"Até ago/2025", responsible:"MEC / Inst. de EPT", legal:"Art. 4º, VI", status:"nao_iniciado", obs:"" },
+        { id:"ept-18", action:"Atuação conjunta entre Rede Federal e secretarias estaduais de educação", deadline:"Até ago/2025", responsible:"Rede Federal / Secret. Est.", legal:"Art. 4º, VII", status:"nao_iniciado", obs:"" },
+        { id:"ept-19", action:"Instituição de instância tripartite de governança", deadline:"Até ago/2025", responsible:"MEC", legal:"Art. 4º, VIII", status:"nao_iniciado", obs:"" },
+      ]},
+      { name:"Contínua", items:[
+        { id:"ept-20", action:"Manutenção e atualização periódica do CNCT e do CNCST", deadline:"Permanente", responsible:"MEC / Sist. / Entidades", legal:"Art. 42-A, § 4º", status:"nao_iniciado", obs:"" },
+        { id:"ept-21", action:"Processo contínuo de avaliação nacional das instituições e cursos de EPT", deadline:"Permanente", responsible:"União (INEP / MEC)", legal:"Art. 9º, VII-A / Art. 42-B", status:"nao_iniciado", obs:"" },
+        { id:"ept-22", action:"Transparência e procedimentos objetivos pelas IES para aproveitamento de estudos de EPT", deadline:"Permanente", responsible:"IES", legal:"Art. 39, § 4º da LDB", status:"nao_iniciado", obs:"" },
+        { id:"ept-23", action:"Articulação contínua entre EPT de nível médio e aprendizagem profissional", deadline:"Permanente", responsible:"Inst. de EPT / Empregadores", legal:"Art. 36-B, §§ 2º e 3º", status:"nao_iniciado", obs:"" },
+        { id:"ept-24", action:"Fiscalização do cumprimento das ações da política nacional de EPT (ação civil pública)", deadline:"Permanente", responsible:"MP / Sociedade Civil", legal:"Art. 4º, par. ún.", status:"nao_iniciado", obs:"" },
+      ]},
+    ],
+  },
+  lei14851: {
+    id:"lei14851", tag:"Lei 14.851/2024", title:"Levantamento da Demanda por Vagas na Educação Infantil (0–3 anos)", date:"3 de maio de 2024",
+    fpmeActions: [
+      { id:"ei-fpme-1", tipo:"Reuniao",
+        descricao:"Diagnóstico de implementação com FMCSV: sensibilização de municípios, transparência das filas de espera, critérios de priorização de vagas e interoperabilidade com o CadÚnico",
+        data:"09/04/2026", linkedItems:["ei-2","ei-3","ei-5","ei-8"],
+        status:"concluido", obs:"PL 3.110/2024 pode ser aproveitado como instrumento. Governo Federal continuará produzindo os Retratos da Educação Infantil (INEP)." },
+      { id:"ei-fpme-2", tipo:"RIC",
+        descricao:"RIC ao MEC sobre desdobramento das ações de implementação da Lei 14.851/2024 — foco no aperfeiçoamento do Sistema Gestão Presente e sensibilização de municípios",
+        data:"2026", linkedItems:["ei-2","ei-3","ei-5"],
+        status:"nao_iniciado", obs:"Encaminhamento definido na reunião com FMCSV em 09/04/2026." },
+      { id:"ei-fpme-3", tipo:"PL",
+        descricao:"PL para vincular informação de acesso à creche ao cadastro do CadÚnico",
+        data:"2026", linkedItems:["ei-3","ei-8"],
+        status:"nao_iniciado", obs:"Ideia levantada na reunião com FMCSV." },
+    ],
+    counter: {
+      title: "Levantamento Nacional – Retrato da Educação Infantil 2025 (INEP)",
+      source: "https://app.powerbi.com/view?r=eyJrIjoiYjFmNWU0NjItMTZiMS00MGE3LWEyNWUtMzUwNzYyZjk0MTg3IiwidCI6ImI4YzI1OTMyLTVlNzYtNGIyYi05YzUzLWQ0MTc0NWU5YzkyZCJ9",
+      report: "https://www.gov.br/mec/pt-br/pnei/retratoedInfantil2025.pdf",
+      items: [
+        {
+          label: "Municípios identificam famílias com crianças não matriculadas nem em lista de espera",
+          options: [
+            { key: "sim",  label: "Sim",      pct: 64.25, n: 3579, color: "#3A8B8B" },
+            { key: "nao",  label: "Não",      pct: 32.30, n: 1799, color: "#e05252" },
+            { key: "nsei", label: "Não sei",  pct:  3.45, n:  192, color: "#b0b8c4" },
+          ]
+        },
+        {
+          label: "Municípios com demanda manifesta por vagas em creche não atendida (famílias que procuram e não encontram vagas)",
+          options: [
+            { key: "sim",   label: "Sim, há demanda",                    pct: 52.11, n: 2904, color: "#3A8B8B" },
+            { key: "nao",   label: "Não há demanda",                     pct: 43.80, n: 2440, color: "#e05252" },
+            { key: "nfaz",  label: "Não faz essa identificação",          pct:  3.23, n:  180, color: "#e8a020" },
+            { key: "nsei",  label: "Não sei informar",                    pct:  0.83, n:   46, color: "#b0b8c4" },
+          ]
+        },
+      ]
+    },
+    phases: [
+      { name:"Imediata", items:[
+        { id:"ei-1", action:"Entrada em vigor da Lei nº 14.851/2024", deadline:"06/05/2024", responsible:"União", legal:"Art. 6º", status:"concluido", obs:"Publicada no DOU de 6 de maio de 2024." },
+      ]},
+      { name:"Curto Prazo", items:[
+        { id:"ei-2", action:"Estabelecimento de normas, procedimentos e prazos pelos Municípios e DF para o levantamento da demanda", deadline:"2024–2025", responsible:"Municípios / DF", legal:"Art. 3º, caput", status:"em_andamento", obs:"" },
+        { id:"ei-3", action:"Realização do levantamento anual da demanda por vagas (0–3 anos) com busca ativa e articulação intersetorial", deadline:"Anualmente", responsible:"Municípios / DF / União / Estados", legal:"Arts. 2º e 3º", status:"em_andamento", obs:"Primeiro ciclo 2025 em andamento (Retrato da Ed. Infantil/INEP)." },
+        { id:"ei-4", action:"Cruzamento com bases de dados de saúde, assistência social, Serpro, DataPrev, Sisobi e Meu SUS Digital", deadline:"Anualmente", responsible:"Municípios / DF / MEC / entidades federais", legal:"Art. 3º, § 1º", status:"em_andamento", obs:"" },
+        { id:"ei-5", action:"Organização de listas de espera por unidade escolar, com critérios públicos e acesso aos nomes dos responsáveis", deadline:"Anualmente", responsible:"Municípios / DF", legal:"Art. 3º, § 2º", status:"em_andamento", obs:"" },
+      ]},
+      { name:"Médio Prazo", items:[
+        { id:"ei-6", action:"Divulgação ampla dos resultados, métodos e prazos do levantamento (inclusive meios eletrônicos)", deadline:"2024–2025", responsible:"Municípios / DF", legal:"Art. 3º, § 1º", status:"em_andamento", obs:"" },
+        { id:"ei-7", action:"Planejamento da expansão da oferta de vagas para a educação infantil pública em cooperação federativa", deadline:"2025–2026", responsible:"Municípios / DF / União / Estados", legal:"Art. 4º", status:"nao_iniciado", obs:"" },
+        { id:"ei-8", action:"Estabelecimento de critérios de prioridade de atendimento respeitando condições socioeconômicas e monoparentalidade", deadline:"2024–2025", responsible:"Municípios / DF", legal:"Art. 3º, § 3º", status:"em_andamento", obs:"" },
+        { id:"ei-9", action:"Repasse preferencial de recursos federais para infraestrutura às redes que realizaram o levantamento", deadline:"A partir de 2025", responsible:"União / MEC", legal:"Art. 5º, I", status:"nao_iniciado", obs:"" },
+      ]},
+      { name:"Contínua", items:[
+        { id:"ei-10", action:"Monitoramento intersetorial do acesso e permanência das crianças, com atenção aos beneficiários de transferência de renda", deadline:"Permanente", responsible:"Municípios / DF / Estados / União", legal:"Art. 3º, § 4º", status:"nao_iniciado", obs:"" },
+        { id:"ei-11", action:"Atualização e divulgação dos microdados dos levantamentos anuais", deadline:"Anualmente (não realizado)", responsible:"MEC / INEP / Municípios / DF", legal:"Art. 3º, § 1º", status:"nao_iniciado", obs:"Etapa ainda não realizada. Microdados do Retrato 2025 não disponibilizados." },
+      ]},
+    ],
+  },
+  pne: {
+    id:"pne", tag:"Lei 15.388/2026", title:"Plano Nacional de Educação 2026–2036", date:"14 de abril de 2026",
+    fpmeActions: [
+      { id:"pne-fpme-1", tipo:"Reuniao",
+        descricao:"Diagnóstico sobre monitoramento do orçamento da educação com Todos pela Educação: execução mensal do MEC, impacto do FUNDEB e incidência junto à Comissão de Orçamento (PLOA 2027)",
+        data:"29/04/2026", linkedItems:["pne-27"],
+        status:"concluido", obs:"Ações necessárias: relatório configuração orçamento MEC até final de maio/2026; sugestões de incidência junto ao Congresso; agenda com MEC sobre PLOA 2027." },
+    ],
+    phases: [
+      { name:"Imediata", items:[
+        { id:"pne-1", action:"Entrada em vigor da Lei 15.388/2026", deadline:"14/04/2026", responsible:"União", legal:"Art. 37", status:"concluido", obs:"" },
+        { id:"pne-2", action:"Formalização, em ato do MEC, da instância tripartite de governança do PNE (subcomissão da CITE)", deadline:"Até ago/2026 (120 dias)", responsible:"MEC / União", legal:"Art. 31", status:"nao_iniciado", obs:"Ver sne-2: instância é subcomissão da CITE (LC 220/2025, Art. 63)." },
+        { id:"pne-3", action:"Formalização pelos Estados das instâncias bipartites de pactuação com Municípios (subcomissões das CIBEs)", deadline:"Até ago/2026 (120 dias)", responsible:"Estados", legal:"Art. 32", status:"nao_iniciado", obs:"Ver sne-2: instâncias são subcomissões das CIBEs (LC 220/2025, Art. 63)." },
+      ]},
+      { name:"Curto Prazo – Governança", items:[
+        { id:"pne-4", action:"INEP define indicadores conceituais e projeta metas nacionais por ente federativo", deadline:"Até out/2026 (180 dias)", responsible:"INEP / União", legal:"Art. 28", status:"nao_iniciado", obs:"" },
+        { id:"pne-5", action:"MEC edita atos sobre governança, monitoramento e avaliação do PNE", deadline:"2026", responsible:"MEC", legal:"Arts. 7º, § 2º e 8º", status:"nao_iniciado", obs:"" },
+        { id:"pne-6", action:"MEC regulamenta o Programa Nacional de Infraestrutura Escolar (PNIE): etapas de avanço progressivo, formas de adesão e critérios de priorização", deadline:"2026", responsible:"MEC", legal:"Art. 25, §§ 1º e 2º", status:"nao_iniciado", obs:"" },
+        { id:"pne-7", action:"Apresentação do 1º Plano de Ações Educacionais da União (referente ao Ano 1 do PNE)", deadline:"Até out/2026 (6 meses)", responsible:"MEC / União", legal:"Art. 33", status:"nao_iniciado", obs:"" },
+        { id:"pne-8", action:"Elaboração e aprovação em lei dos Planos Estaduais de Educação (PEE) e do Plano Distrital de Educação (PDE)", deadline:"Até abr/2027 (12 meses)", responsible:"Estados / DF", legal:"Art. 34, caput", status:"nao_iniciado", obs:"" },
+        { id:"pne-9", action:"Elaboração e aprovação em lei dos Planos Municipais de Educação (PME)", deadline:"Até jul/2027 (15 meses)", responsible:"Municípios", legal:"Art. 34, caput", status:"nao_iniciado", obs:"" },
+        { id:"pne-10", action:"Adesão dos entes federados ao PNIE mediante pactuação de trajetória de cumprimento das metas", deadline:"A partir de 2027", responsible:"Todos os entes / MEC", legal:"Art. 25, caput", status:"nao_iniciado", obs:"" },
+        { id:"pne-11", action:"Apresentação dos 1ºs Planos de Ações Educacionais de Estados, DF e Municípios", deadline:"Até 6 meses após PEE/PDE/PME", responsible:"Estados / Municípios / DF", legal:"Arts. 33 e 34", status:"nao_iniciado", obs:"" },
+        { id:"pne-12", action:"1ª publicação do monitoramento INEP dos índices de alcance das metas (exercícios 2025–2026)", deadline:"Out/2027 (18 meses)", responsible:"INEP / MEC", legal:"Art. 30", status:"nao_iniciado", obs:"" },
+      ]},
+      { name:"Curto Prazo – Metas", items:[
+        { id:"pne-13", action:"Universalização da pré-escola para todas as crianças de 4 a 5 anos", deadline:"Até 2028 (Ano 2)", responsible:"Municípios / Estados / União", legal:"Meta 1.c / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-14", action:"Conectividade de alta velocidade com wi-fi em pelo menos 50% das escolas públicas", deadline:"Até 2028 (Ano 2)", responsible:"MEC / União", legal:"Meta 7.a / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-15", action:"CNE aprova diretrizes para adoção de plataformas digitais e IA na educação (transparência, fins pedagógicos e critérios LGPD)", deadline:"Até 2028 (Ano 2)", responsible:"CNE / MEC", legal:"Estratégia 7.18 / Anexo IV", status:"nao_iniciado", obs:"" },
+      ]},
+      { name:"Médio e Longo Prazo – Governança", items:[
+        { id:"pne-16", action:"Implementação de prova nacional periódica para seleção e ingresso nas carreiras do magistério público", deadline:"Até 2029 (Ano 3)", responsible:"MEC / Redes públicas", legal:"Estratégia 17.24 / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-17", action:"Revisão das metas do PNE com base nos indicadores INEP e deliberação da instância tripartite", deadline:"Até 2031 (Ano 5)", responsible:"Instância tripartite / MEC", legal:"Art. 29", status:"nao_iniciado", obs:"" },
+      ]},
+      { name:"Médio e Longo Prazo – Metas", items:[
+        { id:"pne-18", action:"Universalização do acesso à escola para toda a população de 6 a 17 anos", deadline:"Até 2029 (Ano 3)", responsible:"Municípios / Estados / União", legal:"Meta 4.a / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-19", action:"Condições mínimas de infraestrutura, funcionamento e salubridade em todas as escolas públicas de educação básica", deadline:"Até 2029 (Ano 3)", responsible:"Todos os entes", legal:"Meta 19.c / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-20", action:"80% das crianças alfabetizadas ao final do 2º ano do ensino fundamental", deadline:"Até 2031 (Ano 5)", responsible:"Todos os entes", legal:"Meta 3.a / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-21", action:"Nenhum estudante abaixo do nível básico de aprendizagem: 100% nos anos iniciais do EF, 100% nos anos finais do EF e 100% no Ensino Médio", deadline:"Até 2031 (Ano 5)", responsible:"Todos os entes", legal:"Metas 5.a, 5.b e 5.d / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-22", action:"Nível adequado de aprendizagem: 90% ao fim dos anos iniciais do EF, 85% ao fim dos anos finais do EF e 80% ao fim do Ensino Médio", deadline:"Até 2036 (fim do decênio)", responsible:"Todos os entes", legal:"Metas 5.a, 5.b e 5.d / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-23", action:"Oferta de matrículas em tempo integral em 50% das escolas públicas, atendendo pelo menos 35% dos estudantes da educação básica", deadline:"Até 2031 (Ano 5)", responsible:"Municípios / Estados / União", legal:"Meta 6.a / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-24", action:"Conectividade wi-fi em pelo menos 75% das escolas públicas", deadline:"Até 2031 (Ano 5)", responsible:"MEC / União", legal:"Meta 7.a / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-25", action:"Todos os docentes da educação básica com formação superior específica na área em que atuam", deadline:"Até 2031 (Ano 5)", responsible:"MEC / IES / Redes públicas", legal:"Meta 17.a / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-26", action:"Máximo 30% dos profissionais do magistério público sem cargo efetivo em cada rede", deadline:"Até 2031 (Ano 5)", responsible:"Todos os entes", legal:"Meta 17.d / Anexo IV", status:"nao_iniciado", obs:"" },
+        { id:"pne-27", action:"Ampliação do investimento público em educação ao equivalente a 7,5% do PIB", deadline:"Até 2033 (Ano 7)", responsible:"União / MEC / Min. Fazenda", legal:"Meta 19.a / Anexo IV", status:"nao_iniciado", obs:"" },
+      ]},
+      { name:"Contínua", items:[
+        { id:"pne-28", action:"Monitoramento bienal INEP dos índices de alcance das metas nacionais, com publicação até 31 de março", deadline:"A cada 2 anos", responsible:"INEP / MEC", legal:"Art. 11", status:"nao_iniciado", obs:"" },
+        { id:"pne-29", action:"Elaboração e publicação bienal dos Planos de Ações Educacionais por todos os entes federados", deadline:"A cada 2 anos", responsible:"Todos os Poderes Executivos", legal:"Art. 13", status:"nao_iniciado", obs:"" },
+        { id:"pne-30", action:"Conferências Nacionais de Educação articuladas pelo FNE (mínimo 2 ao longo do decênio)", deadline:"A cada 4 anos (máx.)", responsible:"MEC / FNE / Entes federados", legal:"Art. 9º", status:"nao_iniciado", obs:"" },
+        { id:"pne-31", action:"Disponibilização pública contínua dos planos decenais, planos de ações e relatórios de monitoramento em plataforma nacional", deadline:"Permanente", responsible:"MEC / União", legal:"Art. 14", status:"nao_iniciado", obs:"" },
+      ]},
+    ],
+  },
+};
+
+    let data = structuredClone(LAWS);
+    let activeLaw = "sne";
+    let editing = false;
+    let search = "";
+    let activeCardTab = "impl"; // "impl" | "fpme"
+
+    const app = document.getElementById("app");
+
+    function flat(lk) {
+      return data[lk].phases.flatMap(p => p.items);
+    }
+
+    function update(itemId, field, value) {
+      for (const lk of Object.keys(data)) {
+        for (const ph of data[lk].phases) {
+          for (const it of ph.items) {
+            if (it.id === itemId) { it[field] = value; }
+          }
+        }
+      }
+      render();
+    }
+
+    function updateFpme(lawKey, itemId, field, value) {
+      for (const fa of (data[lawKey].fpmeActions || [])) {
+        if (fa.id === itemId) { fa[field] = value; }
+      }
+      render();
+    }
+
+    function getItemAction(itemId) {
+      for (const lk of Object.keys(data)) {
+        for (const ph of data[lk].phases) {
+          for (const it of ph.items) {
+            if (it.id === itemId) return it.action;
+          }
+        }
+      }
+      return itemId;
+    }
+
+    function filteredLaw(lk) {
+      if (!search.trim()) return data[lk];
+      const t = search.toLowerCase();
+      const c = structuredClone(data[lk]);
+      c.phases = c.phases
+        .map(p => ({
+          ...p,
+          items: p.items.filter(i =>
+            i.action.toLowerCase().includes(t) ||
+            i.responsible.toLowerCase().includes(t) ||
+            i.legal.toLowerCase().includes(t) ||
+            i.obs.toLowerCase().includes(t)
+          )
+        }))
+        .filter(p => p.items.length > 0);
+      return c;
+    }
+
+    function esc(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function statsAll() {
+      const all = [...flat("sne"), ...flat("ept"), ...flat("lei14851"), ...flat("pne")];
+      const total = all.length;
+      const done = all.filter(i => i.status === "concluido").length;
+      const inProg = all.filter(i => i.status === "em_andamento").length;
+      const late = all.filter(i => i.status === "atrasado").length;
+      const pending = total - done - inProg - late;
+      return { total, done, inProg, late, pending };
+    }
+
+    function progressRing(percent) {
+      const size = 52, stroke = 5, r = (size - stroke) / 2;
+      const circ = 2 * Math.PI * r;
+      const off = circ - (percent / 100) * circ;
+      return `
+        <div class="ring">
+          <svg viewBox="0 0 ${size} ${size}">
+            <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="${stroke}"></circle>
+            <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#fff" stroke-width="${stroke}" stroke-dasharray="${circ}" stroke-dashoffset="${off}" stroke-linecap="round"></circle>
+          </svg>
+          <div class="ring-text">${percent}%</div>
+        </div>`;
+    }
+
+    function statusBadge(status) {
+      const c = STATUS_CONFIG[status];
+      return `<span class="status-badge" style="background:${c.bg};color:${c.color};border-color:${c.border}"><span style="font-size:12px">${c.icon}</span> ${c.label}</span>`;
+    }
+
+    function statusSelect(item) {
+      const c = STATUS_CONFIG[item.status];
+      const options = Object.entries(STATUS_CONFIG).map(([k,v]) =>
+        `<option value="${k}" ${k === item.status ? "selected" : ""}>${v.label}</option>`
+      ).join("");
+      return `<select class="status-select" data-item-id="${item.id}" style="background:${c.bg};color:${c.color};border:1.5px solid ${c.border}">${options}</select>`;
+    }
+
+    function fpmeStatusSelect(fa, lawKey) {
+      const c = STATUS_CONFIG[fa.status];
+      const options = Object.entries(STATUS_CONFIG).map(([k,v]) =>
+        `<option value="${k}" ${k === fa.status ? "selected" : ""}>${v.label}</option>`
+      ).join("");
+      return `<select class="status-select fpme-status-select" data-item-id="${fa.id}" data-law-key="${lawKey}" style="background:${c.bg};color:${c.color};border:1.5px solid ${c.border}">${options}</select>`;
+    }
+
+    function fpmeTipoBadge(tipo) {
+      const cfg = FPME_TIPOS[tipo] || FPME_TIPOS.Outros;
+      return `<span class="fpme-type-badge" style="background:${cfg.bg};color:${cfg.color}">${cfg.label}</span>`;
+    }
+
+    function counterSection(c) {
+      const cards = c.items.map(item => {
+        const bars = item.options.map(opt => `
+          <div class="counter-bar-row">
+            <div class="counter-bar-label">${esc(opt.label)}</div>
+            <div class="counter-bar-track">
+              <div class="counter-bar-fill" style="width:${opt.pct}%;background:${opt.color}"></div>
+            </div>
+            <div class="counter-bar-pct" style="color:${opt.color}">${opt.pct.toFixed(2).replace(".",",")}%</div>
+            <div class="counter-bar-abs" style="color:${opt.color}">${opt.n.toLocaleString("pt-BR")} mun.</div>
+          </div>
+        `).join("");
+        return `
+          <div class="counter-card">
+            <div class="counter-card-label">${esc(item.label)}</div>
+            <div class="counter-bars">${bars}</div>
+          </div>`;
+      }).join("");
+      return `
+        <div class="counter-section">
+          <div class="counter-header">
+            <div class="counter-title">📊 ${esc(c.title)}</div>
+            <div class="counter-links">
+              <a class="counter-link" href="${esc(c.source)}" target="_blank">↗ Painel interativo (Power BI)</a>
+              <a class="counter-link" href="${esc(c.report)}" target="_blank">↗ Relatório MEC (PDF)</a>
+            </div>
+          </div>
+          <div class="counter-cards">${cards}</div>
+        </div>`;
+    }
+
+    function fpmeTable(law) {
+      const actions = law.fpmeActions || [];
+      if (actions.length === 0) {
+        return `<div class="fpme-empty">Nenhuma ação de monitoramento registrada para esta lei.</div>`;
+      }
+      const rows = actions.map(fa => {
+        const linkedChips = (fa.linkedItems || []).map(id => {
+          const actionText = getItemAction(id);
+          return `<span class="fpme-item-ref" title="${esc(actionText)}">${esc(id)}</span>`;
+        }).join("");
+        const statusCell = editing ? fpmeStatusSelect(fa, law.id) : statusBadge(fa.status);
+        return `
+          <div class="row">
+            <div class="cell w-fpme-tipo">${fpmeTipoBadge(fa.tipo)}</div>
+            <div class="cell w-fpme-desc">${esc(fa.descricao)}</div>
+            <div class="cell w-fpme-data">${esc(fa.data)}</div>
+            <div class="cell w-fpme-links">${linkedChips}</div>
+            <div class="cell w-fpme-status">${statusCell}</div>
+            <div class="cell w-fpme-obs">
+              <input class="obs-input fpme-obs-input ${fa.obs ? "has-value" : ""}"
+                type="text"
+                data-fpme-obs-id="${fa.id}"
+                data-law-key="${esc(law.id)}"
+                value="${esc(fa.obs)}"
+                placeholder="Adicionar nota...">
+            </div>
+          </div>`;
+      }).join("");
+      return `
+        <div class="fpme-table-wrap">
+          <div class="table-head">
+            <div class="head-cell w-fpme-tipo">Tipo</div>
+            <div class="head-cell w-fpme-desc">Descrição</div>
+            <div class="head-cell w-fpme-data">Data</div>
+            <div class="head-cell w-fpme-links">Itens monitorados</div>
+            <div class="head-cell w-fpme-status">Status</div>
+            <div class="head-cell w-fpme-obs">Observação</div>
+          </div>
+          ${rows}
+        </div>`;
+    }
+
+    function lawCard(law, allItems) {
+      const total = allItems.length;
+      const done = allItems.filter(i => i.status === "concluido").length;
+      const inProg = allItems.filter(i => i.status === "em_andamento").length;
+      const late = allItems.filter(i => i.status === "atrasado").length;
+      const pending = total - done - inProg - late;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      const fpmeCount = (law.fpmeActions || []).length;
+
+      // Build map: itemId -> number of fpme actions linked
+      const fpmeMap = {};
+      for (const fa of (law.fpmeActions || [])) {
+        for (const lid of (fa.linkedItems || [])) {
+          fpmeMap[lid] = (fpmeMap[lid] || 0) + 1;
+        }
+      }
+
+      const phaseHtml = law.phases.map((phase, pi) => {
+        const items = phase.items;
+        const pc = PHASE_COLORS[phase.name] || TEAL;
+        const doneCount = items.filter(i => i.status === "concluido").length;
+        return `
+          <div class="phase-block" style="animation-delay:${0.05 + pi*0.06}s">
+            <div class="phase-head" style="background:${pc}14;border-left:4px solid ${pc}">
+              <span class="phase-name" style="color:${pc}">${phase.name}</span>
+              <span class="phase-summary">${doneCount}/${items.length} concluídas</span>
+              <div class="mini-dots">
+                ${items.map(it => `<div class="mini-dot" style="background:${STATUS_CONFIG[it.status].color}"></div>`).join("")}
+              </div>
+            </div>
+            <div class="table-head">
+              <div class="head-cell" style="flex:0 0 150px">Prazo previsto</div>
+              <div class="head-cell" style="flex:1">Medida</div>
+              <div class="head-cell" style="flex:0 0 140px">Responsável</div>
+              <div class="head-cell" style="flex:0 0 115px">Base legal</div>
+              <div class="head-cell" style="flex:0 0 120px">Status</div>
+              <div class="head-cell" style="flex:0 0 175px">Observação</div>
+            </div>
+            ${items.map(item => {
+              const n = fpmeMap[item.id] || 0;
+              const chip = n > 0
+                ? `<span class="fpme-chip" data-switch-to-fpme title="Ver ${n} ação(ões) FPME vinculada(s)">${n} FPME</span>`
+                : "";
+              return `
+              <div class="row">
+                <div class="cell w-deadline">${esc(item.deadline)}</div>
+                <div class="cell w-action">${esc(item.action)}</div>
+                <div class="cell w-resp">${esc(item.responsible)}</div>
+                <div class="cell w-legal"><span class="legal-pill">${esc(item.legal)}</span></div>
+                <div class="cell w-status">${editing ? statusSelect(item) : statusBadge(item.status)}</div>
+                <div class="cell w-obs" style="${chip ? "display:flex;flex-direction:column;gap:3px;align-items:flex-start" : ""}">
+                  <input class="obs-input ${item.obs ? "has-value" : ""}" type="text" data-obs-id="${item.id}" value="${esc(item.obs)}" placeholder="Adicionar nota...">
+                  ${chip}
+                </div>
+              </div>`;
+            }).join("")}
+          </div>`;
+      }).join("");
+
+      const lawStats = [
+        { n: done,    l: "Concluídas" },
+        { n: inProg,  l: "Em andamento" },
+        { n: late,    l: "Atrasadas" },
+        { n: pending, l: "Pendentes" }
+      ].map(s => `
+        <div class="law-stat">
+          <div class="n" style="color:${LAW_NUMBER_COLORS[s.l]}">${s.n}</div>
+          <div class="l">${s.l}</div>
+        </div>
+      `).join("");
+
+      return `
+        <div class="law-card">
+          <div class="law-header">
+            ${progressRing(pct)}
+            <div class="law-meta">
+              <div class="law-tag">${esc(law.tag)}</div>
+              <div class="law-title">${esc(law.title)}</div>
+              <div class="law-date">Publicação: ${esc(law.date)}</div>
+            </div>
+            <div class="law-stats">${lawStats}</div>
+          </div>
+          <div class="card-tabs">
+            <button class="card-tab ${activeCardTab === "impl" ? "active" : ""}" data-card-tab="impl">Implementação</button>
+            <button class="card-tab ${activeCardTab === "fpme" ? "active" : ""}" data-card-tab="fpme">Ações FPME (${fpmeCount})</button>
+          </div>
+          ${activeCardTab === "impl" ? `
+            ${law.counter ? counterSection(law.counter) : ""}
+            <div style="padding:10px 0">${phaseHtml}</div>
+          ` : fpmeTable(law)}
+        </div>
+      `;
+    }
+
+    function render() {
+      const stats = statsAll();
+      const active = filteredLaw(activeLaw);
+      const card = lawCard(active, flat(activeLaw));
+
+      app.innerHTML = `
+        <div class="topbar">
+          <div class="container">
+            <div class="topbar-inner">
+              <div class="brand">
+                <img src="${LOGO_SRC}" alt="FPME">
+                <div>
+                  <div class="kicker">Painel de Monitoramento</div>
+                  <div class="title">Implementação da Legislação Educacional</div>
+                  <div class="subtitle">LC 220/2025 (SNE) · Lei 14.645/2023 (EPT) · Lei 14.851/2024 (Ed. Infantil 0–3) · Lei 15.388/2026 (PNE)</div>
+                </div>
+              </div>
+              <div class="stats">
+                <div class="stat"><div class="n" style="color:#85c1e9">${stats.total}</div><div class="l">Total</div></div>
+                <div class="stat"><div class="n" style="color:#8CC63F">${stats.done}</div><div class="l">Concluídas</div></div>
+                <div class="stat"><div class="n" style="color:#f9e79f">${stats.inProg}</div><div class="l">Em andamento</div></div>
+                <div class="stat"><div class="n" style="color:#f1948a">${stats.late}</div><div class="l">Atrasadas</div></div>
+                <div class="stat"><div class="n" style="color:#d5dbdb">${stats.pending}</div><div class="l">Pendentes</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="container controls">
+          <div class="tabs">
+            ${Object.entries(data).map(([key, law]) =>
+              `<button class="tab ${activeLaw === key ? "active" : ""}" data-tab="${key}">${esc(law.tag)}</button>`
+            ).join("")}
+          </div>
+          <div class="search-wrap">
+            <input id="search" type="text" placeholder="Buscar ação, responsável, base legal..." value="${esc(search)}">
+            <span class="search-icon">⌕</span>
+          </div>
+          <button id="editBtn" class="edit-btn ${editing ? "active" : ""}">${editing ? "✓ Salvar" : "✎ Editar Status"}</button>
+        </div>
+
+        <div class="container legend">
+          ${Object.entries(STATUS_CONFIG).map(([k,v]) => `
+            <div class="legend-item">
+              <div class="legend-box" style="background:${v.color}"></div>
+              <span>${v.label}</span>
+            </div>
+          `).join("")}
+        </div>
+
+        <div class="container content">${card}</div>
+      `;
+
+      bindEvents();
+    }
+
+    function bindEvents() {
+      document.querySelectorAll("[data-tab]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          activeLaw = btn.getAttribute("data-tab");
+          activeCardTab = "impl"; // reset to implementation on law switch
+          render();
+        });
+      });
+
+      document.querySelectorAll("[data-card-tab]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          activeCardTab = btn.getAttribute("data-card-tab");
+          render();
+        });
+      });
+
+      document.querySelectorAll("[data-switch-to-fpme]").forEach(chip => {
+        chip.addEventListener("click", () => {
+          activeCardTab = "fpme";
+          render();
+        });
+      });
+
+      const searchEl = document.getElementById("search");
+      if (searchEl) {
+        searchEl.addEventListener("input", e => {
+          search = e.target.value;
+          render();
+        });
+      }
+
+      const editBtn = document.getElementById("editBtn");
+      if (editBtn) {
+        editBtn.addEventListener("click", () => {
+          editing = !editing;
+          render();
+        });
+      }
+
+      // Implementation status selects
+      document.querySelectorAll(".status-select:not(.fpme-status-select)").forEach(sel => {
+        sel.addEventListener("change", e => {
+          update(e.target.dataset.itemId, "status", e.target.value);
+        });
+      });
+
+      // FPME status selects
+      document.querySelectorAll(".fpme-status-select").forEach(sel => {
+        sel.addEventListener("change", e => {
+          updateFpme(e.target.dataset.lawKey, e.target.dataset.itemId, "status", e.target.value);
+        });
+      });
+
+      // Implementation obs inputs
+      document.querySelectorAll(".obs-input:not(.fpme-obs-input)").forEach(inp => {
+        inp.addEventListener("input", e => {
+          const id = e.target.dataset.obsId;
+          const val = e.target.value;
+          for (const lk of Object.keys(data)) {
+            for (const ph of data[lk].phases) {
+              for (const it of ph.items) {
+                if (it.id === id) { it.obs = val; }
+              }
+            }
+          }
+          e.target.classList.toggle("has-value", !!val);
+        });
+        inp.addEventListener("focus", e => { e.target.style.borderColor = TEAL; });
+        inp.addEventListener("blur",  e => { e.target.style.borderColor = "#e0e0e0"; });
+      });
+
+      // FPME obs inputs
+      document.querySelectorAll(".fpme-obs-input").forEach(inp => {
+        inp.addEventListener("input", e => {
+          const id = e.target.dataset.fpmeObsId;
+          const lawKey = e.target.dataset.lawKey;
+          for (const fa of (data[lawKey]?.fpmeActions || [])) {
+            if (fa.id === id) { fa.obs = e.target.value; }
+          }
+          e.target.classList.toggle("has-value", !!e.target.value);
+        });
+        inp.addEventListener("focus", e => { e.target.style.borderColor = TEAL; });
+        inp.addEventListener("blur",  e => { e.target.style.borderColor = "#e0e0e0"; });
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
