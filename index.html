@@ -58,7 +58,7 @@
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     }
     .tabs {
-      display: flex; background: #dfe4ea; border-radius: 7px; padding: 3px; gap: 2px;
+      display: flex; flex-wrap: wrap; background: #dfe4ea; border-radius: 7px; padding: 3px; gap: 2px;
     }
     .tab {
       padding: 6px 16px; border-radius: 5px; border: none;
@@ -357,7 +357,7 @@
 
     const LAWS = {
   sne: {
-    id:"sne", tag:"LC 220/2025", title:"Sistema Nacional de Educação", date:"31 de outubro de 2025",
+    id:"sne", tag:"SNE", title:"Sistema Nacional de Educação", date:"31 de outubro de 2025",
     fpmeActions: [
       { id:"sne-fpme-1", tipo:"Reuniao",
         descricao:"Diagnóstico de implementação do SNE com Fundação Itaú: transparência do MEC, regulamentação das CIBEs, participação da sociedade civil na CITE e estruturação da INDE",
@@ -408,7 +408,7 @@
     ],
   },
   ept: {
-    id:"ept", tag:"Lei 14.645/2023", title:"Marco Legal da EPT", date:"2 de agosto de 2023",
+    id:"ept", tag:"Marco EPT", title:"Marco Legal da EPT", date:"2 de agosto de 2023",
     fpmeActions: [
       { id:"ept-fpme-1", tipo:"Reuniao",
         descricao:"Diagnóstico de implementação do Marco Legal da EPT com Fundação Itaú (IET): Comissão Tripartite, Sistema Nacional de Avaliação e DCNs para Formação de Professores",
@@ -459,7 +459,7 @@
     ],
   },
   lei14851: {
-    id:"lei14851", tag:"Lei 14.851/2024", title:"Levantamento da Demanda por Vagas na Educação Infantil (0–3 anos)", date:"3 de maio de 2024",
+    id:"lei14851", tag:"Ed. Infantil", title:"Levantamento da Demanda por Vagas na Educação Infantil (0–3 anos)", date:"3 de maio de 2024",
     fpmeActions: [
       { id:"ei-fpme-1", tipo:"Reuniao",
         descricao:"Diagnóstico de implementação com FMCSV: sensibilização de municípios, transparência das filas de espera, critérios de priorização de vagas e interoperabilidade com o CadÚnico",
@@ -521,7 +521,7 @@
     ],
   },
   pne: {
-    id:"pne", tag:"Lei 15.388/2026", title:"Plano Nacional de Educação 2026–2036", date:"14 de abril de 2026",
+    id:"pne", tag:"PNE", title:"Plano Nacional de Educação 2026–2036", date:"14 de abril de 2026",
     fpmeActions: [
       { id:"pne-fpme-1", tipo:"Reuniao",
         descricao:"Diagnóstico sobre monitoramento do orçamento da educação com Todos pela Educação: execução mensal do MEC, impacto do FUNDEB e incidência junto à Comissão de Orçamento (PLOA 2027)",
@@ -571,6 +571,66 @@
         { id:"pne-29", action:"Elaboração e publicação bienal dos Planos de Ações Educacionais por todos os entes federados", deadline:"A cada 2 anos", responsible:"Todos os Poderes Executivos", legal:"Art. 13", status:"nao_iniciado", obs:"" },
         { id:"pne-30", action:"Conferências Nacionais de Educação articuladas pelo FNE (mínimo 2 ao longo do decênio)", deadline:"A cada 4 anos (máx.)", responsible:"MEC / FNE / Entes federados", legal:"Art. 9º", status:"nao_iniciado", obs:"" },
         { id:"pne-31", action:"Disponibilização pública contínua dos planos decenais, planos de ações e relatórios de monitoramento em plataforma nacional", deadline:"Permanente", responsible:"MEC / União", legal:"Art. 14", status:"nao_iniciado", obs:"" },
+      ]},
+    ],
+  },
+  integral: {
+    id:"integral", tag:"Ed. Integral", title:"Educação Integral em Tempo Integral", date:"EC 135/2024, Lei 14.640/2023 e Res. CIF 23/2026",
+    fpmeActions: [],
+    phases: [
+      { name:"Imediata", items:[
+        { id:"int-1", action:"Instituição do Programa Escola em Tempo Integral no MEC", deadline:"01/08/2023", responsible:"MEC", legal:"Lei 14.640, Art. 1º", status:"concluido", obs:"" },
+        { id:"int-2", action:"Definição de tempo integral: mínimo 7h/dia ou 35h/semana, em 2 turnos, durante todo o ano letivo", deadline:"Vigente", responsible:"Redes públicas", legal:"Lei 14.640, Art. 3º, §1º", status:"concluido", obs:"" },
+        { id:"int-3", action:"Repasse de até 10% dos recursos complementares do Fundeb para criação de matrículas em tempo integral (exercício 2025)", deadline:"Exercício 2025", responsible:"Estados / DF / Municípios", legal:"EC 135, Art. 212-A, XIV", status:"em_andamento", obs:"" },
+      ]},
+      { name:"Curto Prazo", items:[
+        { id:"int-4", action:"Aplicação mínima de 4% do Fundeb para expansão de matrículas em tempo integral", deadline:"A partir de 2026", responsible:"Estados / DF / Municípios", legal:"EC 135, Art. 212-A, XV", status:"nao_iniciado", obs:"" },
+        { id:"int-5", action:"Publicação pelo MEC de orientações para registro dos Planos de Expansão da Educação Integral", deadline:"60 dias após sanção do PNE", responsible:"SEB/MEC + INEP + FNDE", legal:"Res. CIF 23, §3.1.1", status:"nao_iniciado", obs:"" },
+        { id:"int-6", action:"Registro dos Planos de Expansão da Educação Integral pelos entes federados", deadline:"60 dias após orientações do MEC", responsible:"Estados / DF / Municípios", legal:"Res. CIF 23, §3.1.2", status:"nao_iniciado", obs:"" },
+        { id:"int-7", action:"Habilitação do SIOPE pelo FNDE para registro de gastos com educação integral", deadline:"Até 17/04/2026", responsible:"FNDE", legal:"Res. CIF 23, §3.1.3", status:"nao_iniciado", obs:"" },
+        { id:"int-8", action:"Pactuação de matrículas integrais com o MEC: 1ª oferta de distribuição", deadline:"Por rodada MEC", responsible:"Estados / DF / Municípios + MEC", legal:"Lei 14.640, Art. 5º, I", status:"em_andamento", obs:"" },
+        { id:"int-9", action:"Registro bimestral no SIOPE de gastos com os 4% do Fundeb, distinguindo custeio e capital", deadline:"Bimestral + 30 dias", responsible:"Estados / DF / Municípios", legal:"Res. CIF 23, §2.5", status:"nao_iniciado", obs:"" },
+      ]},
+      { name:"Médio Prazo", items:[
+        { id:"int-10", action:"2ª oferta de pactuação, priorizando entes com menor proporção de matrículas integrais", deadline:"Após avaliação da 1ª rodada", responsible:"MEC", legal:"Lei 14.640, Art. 5º, §2º", status:"nao_iniciado", obs:"" },
+        { id:"int-11", action:"Aplicação de recursos de capital para preparação de infraestrutura para futuras matrículas integrais", deadline:"A partir de 2026", responsible:"Estados / DF / Municípios", legal:"Res. CIF 23, §2.6", status:"nao_iniciado", obs:"" },
+        { id:"int-12", action:"Fortalecimento do PNAE (alimentação escolar) e PNATE (transporte escolar) para matrículas integrais", deadline:"2026+", responsible:"MEC / FNDE", legal:"Res. CIF 23, Guia", status:"nao_iniciado", obs:"" },
+        { id:"int-13", action:"Desvinculação de 30% das contribuições sociais da União (DRU) vigente até 31/12/2032", deadline:"Até 31/12/2032", responsible:"União", legal:"EC 135, ADCT Art. 76", status:"em_andamento", obs:"" },
+      ]},
+      { name:"Contínua", items:[
+        { id:"int-14", action:"Aplicação anual mínima de 4% do Fundeb até atingimento das metas de educação integral do PNE", deadline:"Até metas PNE atingidas", responsible:"Estados / DF / Municípios", legal:"EC 135, Art. 212-A, XV", status:"nao_iniciado", obs:"" },
+        { id:"int-15", action:"Monitoramento anual da criação de matrículas vs. Planos de Expansão, com referência no Censo Escolar", deadline:"Anual", responsible:"SEB/MEC + INEP", legal:"Res. CIF 23, §2.9", status:"nao_iniciado", obs:"" },
+        { id:"int-16", action:"Assistência técnica contínua do MEC aos entes: diagnóstico, planejamento, implementação e monitoramento", deadline:"Permanente", responsible:"MEC / SEB", legal:"Res. CIF 23, Guia", status:"nao_iniciado", obs:"" },
+        { id:"int-17", action:"Priorização de escolas que atendem alunos em situação de vulnerabilidade socioeconômica", deadline:"Permanente", responsible:"Estados / DF / Municípios", legal:"Lei 14.640, Art. 3º, §3º, III", status:"nao_iniciado", obs:"" },
+        { id:"int-18", action:"Priorização do ensino médio articulado com educação profissional e tecnológica", deadline:"Permanente", responsible:"Estados / DF / Municípios", legal:"Lei 14.640, Art. 3º, §3º, IV", status:"nao_iniciado", obs:"" },
+        { id:"int-19", action:"Manutenção de sistema de monitoramento quantitativo e qualitativo do Programa Escola em Tempo Integral", deadline:"Anual", responsible:"MEC", legal:"Lei 14.640, Art. 10", status:"nao_iniciado", obs:"" },
+        { id:"int-20", action:"Exercício do controle social do programa pelo CACS/Fundeb", deadline:"Permanente", responsible:"CACS / Fundeb", legal:"Lei 14.640, Art. 9º", status:"nao_iniciado", obs:"" },
+      ]},
+    ],
+  },
+  saude_mental: {
+    id:"saude_mental", tag:"Saúde Mental", title:"Atenção Psicossocial nas Comunidades Escolares", date:"Lei 14.819/2024 e Lei 13.935/2019",
+    fpmeActions: [],
+    phases: [
+      { name:"Imediata", items:[
+        { id:"sm-1", action:"Entrada em vigor da Política Nacional de Atenção Psicossocial nas Comunidades Escolares", deadline:"Janeiro/2024", responsible:"União", legal:"Lei 14.819, Art. 1º", status:"concluido", obs:"" },
+        { id:"sm-2", action:"Obrigatoriedade de equipes multiprofissionais com psicólogos e assistentes sociais nas redes públicas de educação básica", deadline:"Desde dez/2020 (prazo expirado)", responsible:"Redes públicas", legal:"Lei 13.935, Art. 1º", status:"em_andamento", obs:"Prazo de 1 ano da Lei 13.935 expirou em dez/2020; implementação ainda em curso na maioria das redes." },
+      ]},
+      { name:"Curto Prazo", items:[
+        { id:"sm-3", action:"Regulamentação federal da Lei 14.819/2024 com diretrizes nacionais da política de atenção psicossocial", deadline:"2025", responsible:"MEC / MS", legal:"Lei 14.819", status:"nao_iniciado", obs:"" },
+        { id:"sm-4", action:"Criação de Grupos de Trabalho Intersetoriais (GTIs) nos municípios para articulação educação–saúde–assistência social", deadline:"2025–2026", responsible:"Municípios", legal:"Lei 14.819 / PSE", status:"nao_iniciado", obs:"" },
+        { id:"sm-5", action:"Adesão e planejamento do ciclo bienal PSE 2025/2026 com priorização de saúde mental escolar", deadline:"2025", responsible:"Municípios", legal:"PSE / Lei 14.819", status:"em_andamento", obs:"" },
+      ]},
+      { name:"Médio Prazo", items:[
+        { id:"sm-6", action:"Publicação de normas estaduais e municipais regulamentando a atenção psicossocial escolar", deadline:"2025–2026", responsible:"Estados / Municípios", legal:"Lei 14.819 / Lei 13.935", status:"em_andamento", obs:"Diversos estados já publicaram normas próprias (PE, MS, SP, PR, entre outros)." },
+        { id:"sm-7", action:"Ampliação da contratação de psicólogos, assistentes sociais e nutricionistas nas redes de ensino", deadline:"2025–2026", responsible:"Estados / Municípios", legal:"Lei 13.935, Art. 1º", status:"em_andamento", obs:"" },
+        { id:"sm-8", action:"Estruturação de núcleos e unidades de atenção psicossocial escolar (NAPSEdu, UAPSE e similares)", deadline:"2025–2027", responsible:"Estados / Municípios", legal:"Lei 14.819 / normas estaduais", status:"nao_iniciado", obs:"" },
+        { id:"sm-9", action:"Formação continuada de professores e profissionais em acolhimento e suporte emocional", deadline:"2025–2027", responsible:"MEC / Secretarias", legal:"Lei 14.819", status:"em_andamento", obs:"" },
+      ]},
+      { name:"Contínua", items:[
+        { id:"sm-10", action:"Registro e monitoramento das ações de atenção básica escolar via SISAB/e-SUS APS", deadline:"Permanente", responsible:"Municípios / MS", legal:"PSE / Lei 14.819", status:"em_andamento", obs:"" },
+        { id:"sm-11", action:"Mediação de relações sociais e institucionais pelas equipes multiprofissionais, alinhada ao PPP das escolas", deadline:"Permanente", responsible:"Equipes multiprofissionais", legal:"Lei 13.935, Art. 1º, §§1º–2º", status:"nao_iniciado", obs:"" },
+        { id:"sm-12", action:"Integração intersetorial permanente entre redes de educação, saúde e assistência social", deadline:"Permanente", responsible:"Todos os entes", legal:"Lei 14.819 / PSE", status:"nao_iniciado", obs:"" },
       ]},
     ],
   },
@@ -644,7 +704,7 @@
     }
 
     function statsAll() {
-      const all = [...flat("sne"), ...flat("ept"), ...flat("lei14851"), ...flat("pne")];
+      const all = Object.keys(data).flatMap(k => flat(k));
       const total = all.length;
       const done = all.filter(i => i.status === "concluido").length;
       const inProg = all.filter(i => i.status === "em_andamento").length;
@@ -878,7 +938,7 @@
                 <div>
                   <div class="kicker">Painel de Monitoramento</div>
                   <div class="title">Implementação da Legislação Educacional</div>
-                  <div class="subtitle">LC 220/2025 (SNE) · Lei 14.645/2023 (EPT) · Lei 14.851/2024 (Ed. Infantil 0–3) · Lei 15.388/2026 (PNE)</div>
+                  <div class="subtitle">LC 220/2025 (SNE) · Lei 14.645/2023 (EPT) · Lei 14.851/2024 (Ed. Infantil 0–3) · Lei 15.388/2026 (PNE) · Ed. Integral · Saúde Mental</div>
                 </div>
               </div>
               <div class="stats">
